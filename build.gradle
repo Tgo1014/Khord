@@ -15,8 +15,10 @@ ext {
 sourceCompatibility = '11'
 targetCompatibility = '11'
 
-kotlin {
-    explicitApi()
+[compileKotlin, compileTestKotlin].forEach {
+    it.kotlinOptions {
+        jvmTarget = '11'
+    }
 }
 
 dependencies {
