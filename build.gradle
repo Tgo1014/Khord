@@ -6,6 +6,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    maven { url "https://jitpack.io" }
 }
 
 ext {
@@ -29,13 +30,16 @@ test {
     useJUnitPlatform()
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'tgo1014'
-            artifactId = 'Khord'
-            version = '1.0.0'
-            from components.kotlin
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            maven(MavenPublication) {
+                from components.java
+                groupId = 'com.github.Tgo1014'
+                artifactId = 'Khord'
+                version = '1.0.0'
+            }
         }
     }
 }
