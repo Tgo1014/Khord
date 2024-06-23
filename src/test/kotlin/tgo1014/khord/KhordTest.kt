@@ -151,4 +151,18 @@ class KhordTest {
         assertEquals("G#6(9)", result)
     }
 
+    @Test
+    fun `GIVEN chord is sus WHEN searching THEN return as valid chord`() {
+        val result = Khord.find("Gsus G")
+        assertEquals("Gsus", result[0].chord)
+        assertEquals("G", result[1].chord)
+    }
+
+    @Test
+    fun `GIVEN sus chord WHEN transposing THEN transposes correctly`() {
+        val chord = Khord.find("Gsus").first()
+        val result = Khord.transposeChord(chord, ChordRoot.C, ChordRoot.Db)
+        assertEquals("G#sus", result)
+    }
+
 }

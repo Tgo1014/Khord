@@ -110,7 +110,7 @@ public object Khord {
             return validList.contains(chord[1]) || chord[1].isDigit()
         }
         val chordFirstChar = chord.firstOrNull { it.isUpperCase() }?.toString()
-        if (chordFirstChar in ChordRoot.allChords && chord.findAnyOf(listOf("add", "/", "º", "°")) != null) {
+        if (chordFirstChar in ChordRoot.allChords && chord.findAnyOf(listOf("add", "/", "º", "°", "sus")) != null) {
             return true
         }
         if (chordFirstChar in ChordRoot.allChords && chord.any { it.isDigit() }) {
