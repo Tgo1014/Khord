@@ -128,39 +128,30 @@ public object Khord {
     }
 
     private fun String.splitIntoWordsWithIndexes(): List<TextWord> {
-        var finalWord = this
-        val regex = "[^\\s\\n()]+".toRegex() // find anything but spaces and new lines
-        val parenthesisIndexList = finalWord.substringIndices("(", ")")
-        parenthesisIndexList.forEach {
-            val substring = finalWord.substring(it.first + 1, it.second) // Start is inclusive, so +1 to get just the content
-            if (substring.toIntOrNull() != null) {
-                finalWord = finalWord.replaceRange(it.first, it.first + 1, "/")
-                finalWord = finalWord.replaceRange(it.second, it.second + 1, " ")
-            }
-        }
-        return regex.findAll(finalWord).map {
+        val regex = "[^\\s\\n]+".toRegex() // find anything but spaces and new lines
+        val wordList = regex.findAll(this).map {
             TextWord(
                 word = it.value,
                 startIndex = it.range.first,
                 endIndex = it.range.last + 1,
             )
         }.toList()
-    }
-
-    private fun String.substringIndices(startChar: String, endChar: String): List<Pair<Int, Int>> {
-        val substringIndexesList = mutableListOf<Pair<Int, Int>>()
-        var startIndex = -1
-        this.forEachIndexed { index, c ->
-            if (c.toString() == startChar) {
-                startIndex = index
-                return@forEachIndexed
+        val finalList = mutableListOf<TextWord>()
+        // When we have parenthesis, but they are not part of a chord, split them into their own TextWord
+        wordList.forEach {
+            if (it.word.first() == '(' && !it.word.contains(")")) {
+                finalList.add(TextWord(word = "(", startIndex = it.startIndex, endIndex = it.startIndex + 1))
+                finalList.add(TextWord(word = it.word.removeRange(0..0), startIndex = it.startIndex + 1, endIndex = it.endIndex))
+                return@forEach
             }
-            if (c.toString() == endChar && startIndex != -1) {
-                substringIndexesList.add(startIndex to index)
-                startIndex = -1
+            if (it.word.last() == ')' && !it.word.contains("(")) {
+                finalList.add(TextWord(word = it.word.substring(0..<it.word.lastIndex), startIndex = it.startIndex, endIndex = it.endIndex - 1))
+                finalList.add(TextWord(word = ")", startIndex = it.endIndex - 1, endIndex = it.endIndex))
+                return@forEach
             }
+            finalList.add(it)
         }
-        return substringIndexesList.toList()
+        return finalList
     }
 
     private fun String.fixWeirdLineBreaks() = replace("\"", "")

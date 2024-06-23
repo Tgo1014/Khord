@@ -1,7 +1,6 @@
 package tgo1014.khord
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import tgo1014.khord.models.Chord
 import tgo1014.khord.models.ChordRoot
@@ -94,9 +93,9 @@ class KhordTest {
     @Test
     fun `GIVEN chords with parenthesis WHEN searching chords THEN return proper chords`() {
         val result = Khord.find("(C F# G)")
-        assertTrue {
-            result[0].chord == "C" && result[1].chord == "F#" && result[2].chord == "G"
-        }
+        assertEquals("C", result[0].chord )
+        assertEquals("F#", result[1].chord )
+        assertEquals("G", result[2].chord )
     }
 
     @Test
@@ -134,15 +133,22 @@ class KhordTest {
     @Test
     fun `GIVEN chord with parenthesis WHEN searching for it THEN replace it with slash`() {
         val result = Khord.find("G6(9)")
-        assert(result.first().chord == "G6/9")
+        assertEquals("G6(9)", result.first().chord)
     }
 
     @Test
     fun `GIVEN string with multiple parenthesis WHEN find chords THEN map chords properly and ignore text`() {
         val result = Khord.find("G6(9) G6(9) (test)")
-        assert(result[0].chord == "G6/9")
-        assert(result[1].chord == "G6/9")
-        assert(result.getOrNull(2) == null)
+        assertEquals("G6(9)", result[0].chord)
+        assertEquals("G6(9)", result[1].chord)
+        assertNull(result.getOrNull(2))
+    }
+
+    @Test
+    fun `GIVEN chord with parenthesis WHEN transposing THEN transposes correctly`() {
+        val chord = Khord.find("G6(9)").first()
+        val result = Khord.transposeChord(chord, ChordRoot.C, ChordRoot.Db)
+        assertEquals("G#6(9)", result)
     }
 
 }

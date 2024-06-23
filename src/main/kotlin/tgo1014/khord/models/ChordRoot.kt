@@ -23,7 +23,7 @@ public enum class ChordRoot(
 
         private val chordMap = mutableMapOf<String, ChordRoot>()
             .apply {
-                values().forEach { chordRoot ->
+                ChordRoot.entries.forEach { chordRoot ->
                     chordRoot.allAliasList.forEach {
                         this[it] = chordRoot
                     }
@@ -31,11 +31,11 @@ public enum class ChordRoot(
             }
             .toMap()
 
-        val allChords = values()
+        val allChords = entries
             .flatMap { it.aliasList + it.root }
             .sortedByDescending { it.length }
 
-        fun asCircularList() = CircularList(values().toList())
+        fun asCircularList() = CircularList(entries)
 
         fun from(chordString: String): ChordRoot {
             val two = chordString.take(2)
