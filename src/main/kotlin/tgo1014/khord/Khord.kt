@@ -138,7 +138,6 @@ public object Khord {
                 finalWord = finalWord.replaceRange(it.second, it.second + 1, " ")
             }
         }
-        //val removedSymbolsString = this.replace("(", "/").replace(")", " ")
         return regex.findAll(finalWord).map {
             TextWord(
                 word = it.value,
