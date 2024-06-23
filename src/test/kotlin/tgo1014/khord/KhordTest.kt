@@ -115,7 +115,6 @@ class KhordTest {
         val valids = split.filter {
             Khord.find(chordList).isNotEmpty()
         }
-        println(valids)
         assert(valids.size == split.size)
     }
 
@@ -124,6 +123,26 @@ class KhordTest {
         val chord = Chord("Hello World", 0, 1)
         val transposed = Khord.transposeChord(chord, ChordRoot.C, ChordRoot.F)
         assertEquals(transposed, chord.chord)
+    }
+
+    @Test
+    fun `GIVEN string that's text WHEN there's just one chord THEN ignore line as chord`() {
+        val result = Khord.find("Só em Ti")
+        assert(result.isEmpty())
+    }
+
+    @Test
+    fun `GIVEN chord with parenthesis WHEN searching for it THEN replace it with slash`() {
+        val result = Khord.find("G6(9)")
+        assert(result.first().chord == "G6/9")
+    }
+
+    @Test
+    fun `GIVEN string with multiple parenthesis WHEN find chords THEN map chords properly and ignore text`() {
+        val result = Khord.find("G6(9) G6(9) (test)")
+        assert(result[0].chord == "G6/9")
+        assert(result[1].chord == "G6/9")
+        assert(result.getOrNull(2) == null)
     }
 
 }

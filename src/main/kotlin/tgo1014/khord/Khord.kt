@@ -28,8 +28,11 @@ public object Khord {
                     )
                 }
                 // If more than half of the items are chords, consider as a chord line
-                val mostAreChords =
-                    mappedChords.count { it.isConfirmedChord } >= max(mappedChords.size / 2, 1)
+                val mostAreChords = if (mappedChords.size == 1) {
+                    mappedChords.first().isConfirmedChord
+                } else {
+                    mappedChords.count { it.isConfirmedChord } > max(mappedChords.size / 2, 1)
+                }
                 if (mostAreChords) {
                     foundChordsList.addAll(mappedChords.confirmedList)
                 }
@@ -125,15 +128,39 @@ public object Khord {
     }
 
     private fun String.splitIntoWordsWithIndexes(): List<TextWord> {
-        val regex = "[^\\s\\n]+".toRegex() // find anything but spaces and new lines
-        val removedSymbolsString = this.replace("(", " ").replace(")", " ")
-        return regex.findAll(removedSymbolsString).map {
+        var finalWord = this
+        val regex = "[^\\s\\n()]+".toRegex() // find anything but spaces and new lines
+        val parenthesisIndexList = finalWord.substringIndices("(", ")")
+        parenthesisIndexList.forEach {
+            val substring = finalWord.substring(it.first + 1, it.second) // Start is inclusive, so +1 to get just the content
+            if (substring.toIntOrNull() != null) {
+                finalWord = finalWord.replaceRange(it.first, it.first + 1, "/")
+                finalWord = finalWord.replaceRange(it.second, it.second + 1, " ")
+            }
+        }
+        return regex.findAll(finalWord).map {
             TextWord(
                 word = it.value,
                 startIndex = it.range.first,
                 endIndex = it.range.last + 1,
             )
         }.toList()
+    }
+
+    private fun String.substringIndices(startChar: String, endChar: String): List<Pair<Int, Int>> {
+        val substringIndexesList = mutableListOf<Pair<Int, Int>>()
+        var startIndex = -1
+        this.forEachIndexed { index, c ->
+            if (c.toString() == startChar) {
+                startIndex = index
+                return@forEachIndexed
+            }
+            if (c.toString() == endChar && startIndex != -1) {
+                substringIndexesList.add(startIndex to index)
+                startIndex = -1
+            }
+        }
+        return substringIndexesList.toList()
     }
 
     private fun String.fixWeirdLineBreaks() = replace("\"", "")
