@@ -2,7 +2,7 @@
 
 [![](https://jitpack.io/v/Tgo1014/Khord.svg)](https://jitpack.io/#Tgo1014/Khord) 
 ![](https://img.shields.io/github/languages/code-size/Tgo1014/Khord)
-![](https://img.shields.io/badge/Kotlin-1.8.10-blueviolet)
+![](https://img.shields.io/badge/Kotlin-2.0.0-blueviolet)
 
 A utility library to help handling lyrics with chords
 
