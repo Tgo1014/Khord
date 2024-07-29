@@ -165,4 +165,21 @@ class KhordTest {
         assertEquals("G#sus", result)
     }
 
+    @Test
+    fun `GIVEN chords text WHEN chords between parenthesis THEN chords identified correctly`() {
+        val result = Khord.find("(  F   G   C  )")
+        assertEquals("F", result[0].chord)
+        assertEquals("G", result[1].chord)
+        assertEquals("C", result[2].chord)
+    }
+
+    @Test
+    fun `GIVEN chords text WHEN chords between parenthesis inside parenthesis THEN chords identified correctly`() {
+        val result = Khord.find("(  C#7M   Gm7(5b)   C7   Fm7  )")
+        assertEquals("C#7M", result[0].chord)
+        assertEquals("Gm7(5b)", result[1].chord)
+        assertEquals("C7", result[2].chord)
+        assertEquals("Fm7", result[3].chord)
+    }
+
 }

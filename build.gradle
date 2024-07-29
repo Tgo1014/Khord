@@ -22,8 +22,12 @@ targetCompatibility = '11'
     }
 }
 
+kotlin {
+    explicitApi()
+}
+
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
 }
 
 test {
@@ -38,7 +42,7 @@ afterEvaluate {
                 from components.java
                 groupId = 'com.github.Tgo1014'
                 artifactId = 'Khord'
-                version = '1.2.0'
+                version = '1.2.1'
             }
         }
     }
