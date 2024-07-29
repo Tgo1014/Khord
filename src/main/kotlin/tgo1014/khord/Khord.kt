@@ -100,9 +100,8 @@ public object Khord {
         if (chord.length == 1 && chord in ChordRoot.allChords) {
             return true // Need to check if there's other chords in the same line
         }
-        // "º", "°" are different, thanks ASCII!
         if (chord.length == 2) { // confirm Xm chords
-            val validList = listOf('m', '#', 'b', 'º', '°')
+            val validList = listOf('m', '#', 'b', 'º', '°') // "º", "°" are different, thanks ASCII!
             return validList.contains(chord[1]) || chord[1].isDigit() // 6, 7, 13, etc...
         }
         if (chord.length >= 3 && chord[2] == 'm') { // confirm X#m chords
@@ -151,7 +150,7 @@ public object Khord {
             }
             finalList.add(it)
         }
-        return finalList
+        return finalList.filter { it.word.isNotBlank() }
     }
 
     private fun String.fixWeirdLineBreaks() = replace("\"", "")
