@@ -1,3 +1,3 @@
 package tgo1014.khord
 
-public actual val lineSeparator: String = defaultLineSeparator
+public actual val lineSeparator: String = System.lineSeparator()
