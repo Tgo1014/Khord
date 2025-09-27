@@ -154,8 +154,8 @@ public object Khord {
     }
 
     private fun String.fixWeirdLineBreaks() = replace("\"", "")
-        .replace("\\\\n", System.lineSeparator())
-        .replace("\\n", System.lineSeparator())
+        .replace("\\\\n", lineSeparator)
+        .replace("\\n", lineSeparator)
 
     private val List<TextWord>.confirmedList get() = this.filter { it.isConfirmedChord }
 

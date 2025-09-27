@@ -1,9 +1,11 @@
 package tgo1014.khord
 
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import tgo1014.khord.models.Chord
 import tgo1014.khord.models.ChordRoot
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class KhordTest {
 
@@ -16,14 +18,14 @@ class KhordTest {
 
     @Test
     fun `GIVEN a text WHEN searching chord THEN return correct number of chords`() {
-        assert(Khord.find(testText).size == 6)
+        assertEquals(6, Khord.find(testText).size)
     }
 
     @Test
     fun `GIVEN a invalid chord list WHEN searching for chord THEN return empty list`() {
         val invalidChordList = listOf("Car", "\\nBuscai", "2a.vez,", "À tua cruz", "imensidao/")
         invalidChordList.forEach {
-            assert(Khord.find(it).isEmpty())
+            assertTrue(Khord.find(it).isEmpty())
         }
     }
 
@@ -31,7 +33,7 @@ class KhordTest {
     fun `GIVEN a valid chords list WHEN searching for chords THEN return valid chords`() {
         val validChordsList = listOf("D/F#", "G#4", "G7M", "C#m7M")
         validChordsList.forEach {
-            assert(Khord.find(it).isNotEmpty())
+            assertTrue(Khord.find(it).isNotEmpty())
         }
     }
 
@@ -39,34 +41,34 @@ class KhordTest {
     fun `GIVEN a phrase without chords WHEN searching for chords THEN return empty list`() {
         val phasesList = listOf("Em nome de Cristo, que e a nossa paz!")
         phasesList.forEach {
-            assert(Khord.find(it).isEmpty())
+            assertTrue(Khord.find(it).isEmpty())
         }
     }
 
     @Test
     fun `WHEN transposing to the same root THEN return same chord`() {
         val result = Khord.transposeText("C", ChordRoot.C, ChordRoot.C)
-        assert(result == "C")
+        assertEquals("C", result)
     }
 
     @Test
     fun `GIVEN a transposition WHEN transposing THEN return correct chord`() {
         val result = Khord.transposeText("C", ChordRoot.C, ChordRoot.Db)
-        assert(result == "C#")
+        assertEquals("C#", result)
         val result2 = Khord.transposeText("C", ChordRoot.C, ChordRoot.Bb)
-        assert(result2 == "Bb")
+        assertEquals("Bb", result2)
     }
 
     @Test
     fun `GIVEN a text with chords and phrases WHEN transposing text THEN return same text with transposed notes`() {
         val result = Khord.transposeText("C\nCar", ChordRoot.C, ChordRoot.D)
-        assert(result == "D\nCar")
+        assertEquals("D\nCar", result)
     }
 
     @Test
     fun `GIVEN a text with just a chord WHEN transposing text THEN return transposed chord`() {
         val result = Khord.transposeText("G", ChordRoot.G, ChordRoot.C)
-        assert(result == "C")
+        assertEquals("C", result)
     }
 
     @Test
@@ -93,9 +95,9 @@ class KhordTest {
     @Test
     fun `GIVEN chords with parenthesis WHEN searching chords THEN return proper chords`() {
         val result = Khord.find("(C F# G)")
-        assertEquals("C", result[0].chord )
-        assertEquals("F#", result[1].chord )
-        assertEquals("G", result[2].chord )
+        assertEquals("C", result[0].chord)
+        assertEquals("F#", result[1].chord)
+        assertEquals("G", result[2].chord)
     }
 
     @Test
@@ -114,7 +116,7 @@ class KhordTest {
         val valids = split.filter {
             Khord.find(chordList).isNotEmpty()
         }
-        assert(valids.size == split.size)
+        assertEquals(valids.size, split.size)
     }
 
     @Test
@@ -127,7 +129,7 @@ class KhordTest {
     @Test
     fun `GIVEN string that's text WHEN there's just one chord THEN ignore line as chord`() {
         val result = Khord.find("Só em Ti")
-        assert(result.isEmpty())
+        assertTrue(result.isEmpty())
     }
 
     @Test

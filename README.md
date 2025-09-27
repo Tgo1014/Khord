@@ -1,6 +1,6 @@
 # Khord
 
-[![](https://jitpack.io/v/Tgo1014/Khord.svg)](https://jitpack.io/#Tgo1014/Khord) 
+[![](https://jitpack.io/v/Tgo1014/Khord.svg)](https://jitpack.io/#Tgo1014/Khord)
 ![](https://img.shields.io/github/languages/code-size/Tgo1014/Khord)
 ![](https://img.shields.io/badge/Kotlin-2.0.0-blueviolet)
 
