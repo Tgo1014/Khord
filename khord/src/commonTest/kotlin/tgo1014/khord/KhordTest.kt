@@ -80,7 +80,7 @@ class KhordTest {
     }
 
     @Test
-    fun `GIVEN a text with chords, text and breaklines WHEN transposing text THEN return correct chords`() {
+    fun `GIVEN a text with chords text and breaklines WHEN transposing text THEN return correct chords`() {
         val result = Khord.transposeText(
             "       Em           C           Am7        F#º\nVim buscar e vim salvar o que estava já perdido",
             ChordRoot.C,
@@ -109,7 +109,7 @@ class KhordTest {
     }
 
     @Test
-    fun `GIVEN a ChatGPT (heh!) generated chord list WHEN searching chords THEN all are valid`() {
+    fun `GIVEN a ChatGPT _hehe!_ generated chord list WHEN searching chords THEN all are valid`() {
         val chordList =
             "C, G, Am, F, Dm, Em, A, E, D, Bb, Gm, B, C7, Fmaj7, G7, Am7, D7, B7, E7, Cmaj7, Fm, Ab, Gmaj7, Cm, Eb, A7, Dm7, Gm7, C#m, F#m, Bm, E6, Cdim, G#dim, D#dim, Adim, C#7, F#7, B7b9, G#7b9, D#7b9, A7b9, D#7, G#7, C#m7, F#m7, Bm7, Em7, A7#5, D#7#5, G#7#5, C#7#5, D7#9, G7#9, A7#9, C7#9, Dm6, Am6, G6, C6, Bb6, F6, D7b5, G7b5, A7b5, C7b5, Dm9, Am9, G9, C9, Bb9, F9, Emaj7, Bb7, G7b9, A7b13, C13, D13, G13, E13, A13, B13, F#13, C#13, F13, Bb13, Abmaj7, Dbmaj7, Gbmaj7, Gbm7, Db7, Ab7, Gb7, Bbmaj7, Ebmaj7, F#7, C#m9, F#m9, Bm9, Em9, Amaj7#5, D7alt, G7alt, C7alt, F7alt"
         val split = chordList.split(",")
