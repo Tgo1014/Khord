@@ -12,6 +12,7 @@ group = "tgo1014.khord"
 version = "local_snapshot"
 
 kotlin {
+    applyDefaultHierarchyTemplate()
     explicitApi()
 
     jvm()
