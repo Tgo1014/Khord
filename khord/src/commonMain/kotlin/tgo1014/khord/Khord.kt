@@ -78,7 +78,7 @@ public object Khord {
     ): String {
         try {
             if (originalTone == newTone) return chord.chord
-            val transposeDiff = newTone.compareTo(originalTone)
+            val transposeDiff = newTone.ordinal - originalTone.ordinal
             val root = ChordRoot.from(chord.chord)
             val newRoot = ChordRoot.asCircularList()[root.ordinal + transposeDiff]
             val transposeChord = chord.chord.replaceRange(0, root.root.length, newRoot.root)
