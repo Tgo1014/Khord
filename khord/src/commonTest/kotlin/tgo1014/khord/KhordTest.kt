@@ -184,4 +184,28 @@ class KhordTest {
         assertEquals("Fm7", result[3].chord)
     }
 
+    @Test
+    fun `GIVEN complex chords WHEN simplifying THEN simple versions returned`() {
+        val result = Khord.find(text = "(  C#7M   Gm7(5b)   C7   Fm7  )", simplify = true)
+        assertEquals("C#, Gm7, C7, Fm7", result.joinToString { it.chord })
+    }
+
+    @Test
+    fun `GIVEN complex chords WHEN not simplifying THEN complex versions returned`() {
+        val result = Khord.find(text = "(  C#7M   Gm7(5b)   C7   Fm7  )")
+        assertEquals("C#7M, Gm7(5b), C7, Fm7", result.joinToString { it.chord })
+    }
+
+    @Test
+    fun `GIVEN complex chords WHEN simplifying THEN index is updated accordingly`() {
+        val result = Khord.find(text = "C#7M   Gm7(5b)", simplify = true)
+        assertEquals("(0, 2), (7, 10)", result.map { it.startIndex to it.endIndex }.joinToString())
+    }
+
+    @Test
+    fun `GIVEN complex chords WHEN not simplifying THEN index is kept`() {
+        val result = Khord.find(text = "C#7M   Gm7(5b)")
+        assertEquals("(0, 4), (7, 14)", result.map { it.startIndex to it.endIndex }.joinToString())
+    }
+
 }

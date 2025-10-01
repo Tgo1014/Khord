@@ -10,10 +10,15 @@ public object Khord {
     /**
      * Search the provided [text] for known [Chord]s
      *
+     * @param text The text to search for chords.
+     * @param simplify If true, simplifies chords (e.g., Cmaj7 becomes C). Defaults to false.
      * @return list of detected [Chord]s on text or empty
      */
-    public fun find(text: String): List<Chord> {
-        val foundChordsList = mutableListOf<TextWord>()
+    public fun find(
+        text: String,
+        simplify: Boolean = false,
+    ): List<Chord> {
+        var foundChordsList = mutableListOf<TextWord>()
         var offset = 0
         text.fixWeirdLineBreaks()
             .lines()
@@ -38,6 +43,9 @@ public object Khord {
                 }
                 offset += lineText.length + 1 // +1 for line break
             }
+        if (simplify) {
+            foundChordsList = foundChordsList.map { it.simplify() }.toMutableList()
+        }
         return foundChordsList.map { it.toChord() }
     }
 
@@ -88,10 +96,10 @@ public object Khord {
             var reversedRoot = transposeChord.substringAfter("/")
             reversedRoot = transposeChord(find(reversedRoot).first(), originalTone, newTone)
             return transposeChord.substringBefore("/") + "/" + reversedRoot
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // In case there's a weird symbol that gets recognized as chord and fails to transpose,
             // just return it back instead of crashing
-            println("Failed to transpose chord: $chord")
+            println("Khord: Failed to transpose chord: $chord")
             return chord.chord
         }
     }
@@ -152,6 +160,70 @@ public object Khord {
         }
         return finalList.filter { it.word.isNotBlank() }
     }
+
+
+    /**
+     * Simplifies a [TextWord] if it's a confirmed chord and matches a simplification rule.
+     *
+     * For example, "Cmaj7" would be simplified to "C".
+     *
+     * The simplification rules are defined in `simplificationMap`.
+     * If the chord doesn't match any rule or isn't a confirmed chord, it's returned unchanged.
+     *
+     * @return The simplified [TextWord], or the original if no simplification occurred.
+     */
+    private fun TextWord.simplify(): TextWord {
+        if (!this.isConfirmedChord) {
+            return this
+        }
+        for ((complexChord, simplifiedChord) in simplificationMap) {
+            if (this.word.contains(complexChord)) {
+                val simplifiedWord = this.word.replace(complexChord, simplifiedChord)
+                return this.copy(
+                    word = simplifiedWord,
+                    endIndex = this.endIndex - (this.word.length - simplifiedWord.length)
+                )
+            }
+        }
+        return this
+    }
+
+    private val simplificationMap = mapOf(
+        "maj9"   to "maj7",
+        "Δ9"     to "maj7",
+        "7M(9)"  to "7M",
+        "maj7"   to "",
+        "Δ7"     to "",
+        "7M"     to "",
+        "add9"   to "",
+        "13"     to "7",
+        "11"     to "7",
+        "9"      to "7",
+        "7b9"    to "7",
+        "7#9"    to "7",
+        "7b5"    to "7",
+        "7#5"    to "7",
+        "m7b5"   to "m7",
+        "m7(5b)" to "m7",
+        "ø7"     to "m7",
+        "dim7"   to "m7",
+        "º7"     to "m7",
+        "m9"     to "m7",
+        "m11"    to "m7",
+        "m13"    to "m7",
+        "mMaj7"  to "m",
+        "mΔ7"    to "m",
+        "m7M"    to "m",
+        "sus2"   to "",
+        "sus4"   to "",
+        "6"      to "",
+        "m6"     to "m",
+        "aug"    to "",
+        "+"      to "",
+        "dim"    to "m",
+        "º"      to "m",
+        "5"      to ""
+    )
 
     private fun String.fixWeirdLineBreaks() = replace("\"", "")
         .replace("\\\\n", lineSeparator)
