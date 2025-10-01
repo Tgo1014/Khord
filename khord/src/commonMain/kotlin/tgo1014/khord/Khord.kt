@@ -33,10 +33,13 @@ public object Khord {
                     )
                 }
                 // If more than half of the items are chords, consider as a chord line
-                val mostAreChords = if (mappedChords.size == 1) {
-                    mappedChords.first().isConfirmedChord
+                val filteredMostAreChords =  mappedChords.filter { it.word !in listOf("(",")") }  // Ignore parenthesis
+                val mostAreChords = if (filteredMostAreChords.size == 1) {
+                    filteredMostAreChords.first().isConfirmedChord
                 } else {
-                    mappedChords.count { it.isConfirmedChord } > max(mappedChords.size / 2, 1)
+                    filteredMostAreChords
+                        .filter { it.word !in listOf("(",")") }
+                        .count { it.isConfirmedChord } > max(filteredMostAreChords.size / 2, 1)
                 }
                 if (mostAreChords) {
                     foundChordsList.addAll(mappedChords.confirmedList)

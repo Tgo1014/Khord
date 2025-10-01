@@ -208,4 +208,11 @@ class KhordTest {
         assertEquals("(0, 4), (7, 14)", result.map { it.startIndex to it.endIndex }.joinToString())
     }
 
+    @Test
+    fun `GIVEN chords inside parenthesis WHEN finding chords THEN chords identified correctly`() {
+        val result = Khord.find("(  A/B  )  (  C/D  )")
+        assertEquals("A/B", result[0].chord)
+        assertEquals("C/D", result[1].chord)
+    }
+
 }
