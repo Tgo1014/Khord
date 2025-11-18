@@ -215,4 +215,37 @@ class KhordTest {
         assertEquals("C/D", result[1].chord)
     }
 
+    private val simplifyTestText = "Bm        Bm/A          Abm7(5-)      G\n" +
+            "Há quanto tempo te esperava, Amado meu\n" +
+            "Bm         Bm/A      Abm7(5-)      G\n" +
+            "Há tantas noites vigiava, Esposo meu"
+
+    @Test
+    fun `GIVEN chords text WHEN simplifying THEN simple versions returned`() {
+        val result = Khord.simplifyChordsInText(simplifyTestText)
+        assertEquals(
+            "Bm        Bm/A          Abm7          G\n" +
+                    "Há quanto tempo te esperava, Amado meu\n" +
+                    "Bm         Bm/A      Abm7          G\n" +
+                    "Há tantas noites vigiava, Esposo meu",
+            result,
+        )
+    }
+
+    @Test
+    fun `GIVEN simplifying WHEN searching chords THEN return correct chords`() {
+        val result = Khord.simplifyChordsInText(testText).run { Khord.find(this) }
+        assertEquals(
+            "(8, 9), (21, 22), (50, 57), (67, 68), (97, 99), (114, 115)",
+            result.map { it.startIndex to it.endIndex }.joinToString()
+        )
+        assertEquals(6, result.size)
+    }
+
+    @Test
+    fun `GIVEN chord is complex WHEN simplifying THEN return Abm7`() {
+        val result = Khord.simplifyChordsInText("Abm7(5-)")
+        assertEquals("Abm7", result.trim())
+    }
+
 }

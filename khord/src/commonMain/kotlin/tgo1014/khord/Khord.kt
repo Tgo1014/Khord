@@ -53,6 +53,30 @@ public object Khord {
     }
 
     /**
+     * Finds all chords in a given [text] and simplifies them.
+     *
+     * For example, a line containing "Cmaj7 G7 Am" would be transformed into "C     G  Am",
+     * preserving the alignment by padding with spaces.
+     *
+     * @param text The input string containing chords to be simplified.
+     * @return A new string with the chords simplified and alignment preserved.
+     */
+    public fun simplifyChordsInText(text: String): String {
+        val originalChordList = find(text)
+        var simplifiedText = text.fixWeirdLineBreaks()
+        originalChordList.forEach {
+            val simpleChord = it.simplify()
+            val sizeDiffInSpaces = List(it.chord.length - simpleChord.chord.length) { " " }.joinToString("")
+            simplifiedText = simplifiedText.replaceRange(
+                startIndex = it.startIndex ,
+                endIndex = it.endIndex,
+                replacement = simpleChord.chord + sizeDiffInSpaces
+            )
+        }
+        return simplifiedText
+    }
+
+    /**
      * Transpose the found [Chord]s in the [text] from the [originalTone] to the desired [newTone]
      *
      * @return text with chords transposed
@@ -179,19 +203,47 @@ public object Khord {
         if (!this.isConfirmedChord) {
             return this
         }
-        for ((complexChord, simplifiedChord) in simplificationMap) {
-            if (this.word.contains(complexChord)) {
-                val simplifiedWord = this.word.replace(complexChord, simplifiedChord)
-                return this.copy(
-                    word = simplifiedWord,
-                    endIndex = this.endIndex - (this.word.length - simplifiedWord.length)
-                )
+        val (simplifiedWord, lengthDiff) = simplifyChordString(this.word)
+        return this.copy(
+            word = simplifiedWord,
+            endIndex = this.endIndex - lengthDiff
+        )
+    }
+
+    /**
+     * Simplifies a given [Chord] by removing complex notations.
+     *
+     * This function takes a [Chord] object and simplifies its string representation
+     * based on a predefined map of simplification rules. For example, a chord like "Am7(5-)"
+     * might be simplified to "Am7". If no simplification rule applies, the original chord is returned.
+     *
+     * @return A new [Chord] object with the simplified chord string, or the original [Chord] if no simplification was performed.
+     */
+    private fun Chord.simplify(): Chord {
+        val (simplifiedChord, lengthDiff) = simplifyChordString(this.chord)
+        return this.copy(
+            chord = simplifiedChord,
+            endIndex = this.endIndex - lengthDiff
+        )
+    }
+
+    /**
+     * Simplifies a chord string based on the rules in `simplificationMap`.
+     *
+     * @return A [Pair] containing the simplified chord string and the difference in length.
+     */
+    private fun simplifyChordString(chordString: String): Pair<String, Int> {
+        for ((complex, simple) in simplificationMap) {
+            if (chordString.contains(complex)) {
+                val simplified = chordString.replace(complex, simple)
+                return simplified to (chordString.length - simplified.length)
             }
         }
-        return this
+        return chordString to 0
     }
 
     private val simplificationMap = mapOf(
+        "m7(5-)" to "m7",
         "maj9"   to "maj7",
         "Δ9"     to "maj7",
         "7M(9)"  to "7M",
@@ -225,7 +277,8 @@ public object Khord {
         "+"      to "",
         "dim"    to "m",
         "º"      to "m",
-        "5"      to ""
+        "5"      to "",
+        "m7b5"   to "m7",
     )
 
     private fun String.fixWeirdLineBreaks() = replace("\"", "")
