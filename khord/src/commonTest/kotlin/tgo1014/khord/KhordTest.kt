@@ -246,6 +246,9 @@ class KhordTest {
     fun `GIVEN chord is complex WHEN simplifying THEN return Abm7`() {
         val result = Khord.simplifyChordsInText("Abm7(5-)")
         assertEquals("Abm7", result.trim())
+
+        val result2 = Khord.simplifyChordsInText("D7(9-)")
+        assertEquals("D7", result2.trim())
     }
 
 }

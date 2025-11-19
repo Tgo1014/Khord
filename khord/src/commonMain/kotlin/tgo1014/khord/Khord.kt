@@ -243,6 +243,7 @@ public object Khord {
     }
 
     private val simplificationMap = mapOf(
+        "7(9-)"  to "7",
         "m7(5-)" to "m7",
         "maj9"   to "maj7",
         "Δ9"     to "maj7",
