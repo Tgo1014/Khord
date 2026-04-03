@@ -245,10 +245,48 @@ class KhordTest {
     @Test
     fun `GIVEN chord is complex WHEN simplifying THEN return Abm7`() {
         val result = Khord.simplifyChordsInText("Abm7(5-)")
-        assertEquals("Abm7", result.trim())
+        assertEquals("Abm7    ", result) // Abm7(5-) is 8 chars, Abm7 is 4 chars, so 4 spaces
 
         val result2 = Khord.simplifyChordsInText("D7(9-)")
-        assertEquals("D7", result2.trim())
+        assertEquals("D7    ", result2) // D7(9-) is 6 chars, D7 is 2 chars, so 4 spaces
     }
 
+    @Test
+    fun `GIVEN a chord wrapped in parenthesis WHEN searching for chords THEN identify it as valid`() {
+        val result = Khord.find("(C)")
+        assertEquals(1, result.size)
+        assertEquals("C", result.first().chord)
+    }
+
+    @Test
+    fun `GIVEN a chord with maj, dim or aug extension WHEN searching for chords THEN identify it as valid`() {
+        val chords = listOf("Cmaj7", "Cdim", "Caug")
+        chords.forEach {
+            val result = Khord.find(it)
+            assertEquals(1, result.size, "Failed to find $it")
+            assertEquals(it, result.first().chord)
+        }
+    }
+
+    @Test
+    fun `GIVEN a slash chord WHEN transposing THEN transpose both parts correctly`() {
+        val result = Khord.transposeChord(Chord("C/E", 0, 3), ChordRoot.C, ChordRoot.D)
+        assertEquals("D/F#", result)
+    }
+
+    @Test
+    fun `GIVEN simplifying chords WHEN simplified chord is shorter THEN pad with correct number of spaces`() {
+        // Cmaj7 (5 chars) simplified to C (1 char) -> 4 spaces added
+        val result = Khord.simplifyChordsInText("Cmaj7 G")
+        assertEquals("C     G", result)
+    }
+
+    @Test
+    fun `GIVEN a text with escaped line breaks WHEN searching chords THEN identify them correctly`() {
+        val text = "C\\nF"
+        val result = Khord.find(text)
+        assertEquals(2, result.size)
+        assertEquals("C", result[0].chord)
+        assertEquals("F", result[1].chord)
+    }
 }

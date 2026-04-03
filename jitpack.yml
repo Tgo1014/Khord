@@ -1,2 +1,4 @@
 jdk:
-  - openjdk11
+  - openjdk21
+install:
+  - ./gradlew :khord:publishToMavenLocal

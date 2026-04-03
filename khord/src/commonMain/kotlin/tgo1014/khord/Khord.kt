@@ -3,7 +3,6 @@ package tgo1014.khord
 import tgo1014.khord.models.Chord
 import tgo1014.khord.models.ChordRoot
 import tgo1014.khord.models.TextWord
-import kotlin.math.max
 
 public object Khord {
 
@@ -18,38 +17,45 @@ public object Khord {
         text: String,
         simplify: Boolean = false,
     ): List<Chord> {
-        var foundChordsList = mutableListOf<TextWord>()
+        val fixedText = text.fixWeirdLineBreaks()
         var offset = 0
-        text.fixWeirdLineBreaks()
-            .lines()
-            .forEach { lineText ->
+        val foundChordsList = buildList {
+            fixedText.lines().forEach { lineText ->
                 val wordsInLine = detectWordsInLine(lineText)
                 val mappedChords = wordsInLine.map {
-                    TextWord(
-                        word = it.word,
+                    it.copy(
                         startIndex = it.startIndex + offset,
                         endIndex = it.endIndex + offset,
                         isConfirmedChord = isValidChord(it.word)
                     )
                 }
                 // If more than half of the items are chords, consider as a chord line
-                val filteredMostAreChords =  mappedChords.filter { it.word !in listOf("(",")") }  // Ignore parenthesis
-                val mostAreChords = if (filteredMostAreChords.size == 1) {
-                    filteredMostAreChords.first().isConfirmedChord
+                val filteredMostAreChords = mappedChords.filter { it.word !in listOf("(", ")") }
+                val mostAreChords = if (filteredMostAreChords.isNotEmpty()) {
+                    filteredMostAreChords.count { it.isConfirmedChord } > filteredMostAreChords.size / 2
                 } else {
-                    filteredMostAreChords
-                        .filter { it.word !in listOf("(",")") }
-                        .count { it.isConfirmedChord } > max(filteredMostAreChords.size / 2, 1)
+                    false
                 }
                 if (mostAreChords) {
-                    foundChordsList.addAll(mappedChords.confirmedList)
+                    addAll(mappedChords.confirmedList.map { textWord ->
+                        val chord = textWord.toChord()
+                        if (chord.chord.startsWith("(") && chord.chord.endsWith(")")) {
+                            chord.copy(
+                                chord = chord.chord.removeSurrounding("(", ")"),
+                                startIndex = chord.startIndex + 1,
+                                endIndex = chord.endIndex - 1
+                            )
+                        } else chord
+                    })
                 }
                 offset += lineText.length + 1 // +1 for line break
             }
-        if (simplify) {
-            foundChordsList = foundChordsList.map { it.simplify() }.toMutableList()
         }
-        return foundChordsList.map { it.toChord() }
+        return if (simplify) {
+            foundChordsList.map { it.simplify() }
+        } else {
+            foundChordsList
+        }
     }
 
     /**
@@ -62,13 +68,14 @@ public object Khord {
      * @return A new string with the chords simplified and alignment preserved.
      */
     public fun simplifyChordsInText(text: String): String {
-        val originalChordList = find(text)
-        var simplifiedText = text.fixWeirdLineBreaks()
+        val fixedText = text.fixWeirdLineBreaks()
+        val originalChordList = find(fixedText)
+        var simplifiedText = fixedText
         originalChordList.forEach {
             val simpleChord = it.simplify()
-            val sizeDiffInSpaces = List(it.chord.length - simpleChord.chord.length) { " " }.joinToString("")
+            val sizeDiffInSpaces = " ".repeat((it.chord.length - simpleChord.chord.length).coerceAtLeast(0))
             simplifiedText = simplifiedText.replaceRange(
-                startIndex = it.startIndex ,
+                startIndex = it.startIndex,
                 endIndex = it.endIndex,
                 replacement = simpleChord.chord + sizeDiffInSpaces
             )
@@ -85,8 +92,9 @@ public object Khord {
         if (originalTone == newTone || newTone == null) {
             return text
         }
-        var transposedText = text.fixWeirdLineBreaks()
-        val chordList = find(text)
+        val fixedText = text.fixWeirdLineBreaks()
+        val chordList = find(fixedText)
+        var transposedText = fixedText
         var transposedChordsSizeDiffOffset = 0
         chordList.forEach { chord ->
             val chordSize = chord.endIndex - chord.startIndex
@@ -111,45 +119,42 @@ public object Khord {
         originalTone: ChordRoot,
         newTone: ChordRoot
     ): String {
-        try {
+        return try {
             if (originalTone == newTone) return chord.chord
-            val transposeDiff = newTone.ordinal - originalTone.ordinal
             val root = ChordRoot.from(chord.chord)
-            val newRoot = ChordRoot.asCircularList()[root.ordinal + transposeDiff]
+            val newRoot = transposeRoot(root, originalTone, newTone)
             val transposeChord = chord.chord.replaceRange(0, root.root.length, newRoot.root)
             if (!transposeChord.contains("/")) {
                 return transposeChord
             }
-            var reversedRoot = transposeChord.substringAfter("/")
-            reversedRoot = transposeChord(find(reversedRoot).first(), originalTone, newTone)
-            return transposeChord.substringBefore("/") + "/" + reversedRoot
+            val reversedRootStr = transposeChord.substringAfter("/")
+            val reversedRoot = ChordRoot.from(reversedRootStr)
+            val newReversedRoot = transposeRoot(reversedRoot, originalTone, newTone)
+            transposeChord.substringBefore("/") + "/" + newReversedRoot.root
         } catch (_: Exception) {
             // In case there's a weird symbol that gets recognized as chord and fails to transpose,
             // just return it back instead of crashing
             println("Khord: Failed to transpose chord: $chord")
-            return chord.chord
+            chord.chord
         }
     }
 
+    private fun transposeRoot(root: ChordRoot, originalTone: ChordRoot, newTone: ChordRoot): ChordRoot {
+        val transposeDiff = newTone.ordinal - originalTone.ordinal
+        return ChordRoot.asCircularList()[root.ordinal + transposeDiff]
+    }
+
     private fun isValidChord(chord: String): Boolean {
-        if (chord.length == 1 && chord in ChordRoot.allChords) {
-            return true // Need to check if there's other chords in the same line
+        val cleaned = chord.removePrefix("(").removeSuffix(")")
+        val rootStr = ChordRoot.allChords.firstOrNull { cleaned.startsWith(it) } ?: return false
+        if (cleaned.length == rootStr.length) return true
+        val suffix = cleaned.substring(rootStr.length)
+        if (suffix.startsWith('m')) {
+            if (suffix.length == 1) return true
+            if (suffix[1].isDigit() || suffix[1] in listOf('º', '°')) return true
         }
-        if (chord.length == 2) { // confirm Xm chords
-            val validList = listOf('m', '#', 'b', 'º', '°') // "º", "°" are different, thanks ASCII!
-            return validList.contains(chord[1]) || chord[1].isDigit() // 6, 7, 13, etc...
-        }
-        if (chord.length >= 3 && chord[2] == 'm') { // confirm X#m chords
-            val validList = listOf('#', 'b', 'º', '°')
-            return validList.contains(chord[1]) || chord[1].isDigit()
-        }
-        val chordFirstChar = chord.firstOrNull { it.isUpperCase() }?.toString()
-        if (chordFirstChar in ChordRoot.allChords && chord.findAnyOf(listOf("add", "/", "º", "°", "sus")) != null) {
-            return true
-        }
-        if (chordFirstChar in ChordRoot.allChords && chord.any { it.isDigit() }) {
-            return true
-        }
+        if (suffix.any { it.isDigit() }) return true
+        if (suffix.findAnyOf(listOf("add", "/", "º", "°", "sus", "maj", "dim", "aug")) != null) return true
         return false
     }
 
@@ -170,45 +175,23 @@ public object Khord {
                 endIndex = it.range.last + 1,
             )
         }.toList()
-        val finalList = mutableListOf<TextWord>()
-        // When we have parenthesis, but they are not part of a chord, split them into their own TextWord
-        wordList.forEach {
-            if (it.word.first() == '(' && !it.word.contains(")")) {
-                finalList.add(TextWord(word = "(", startIndex = it.startIndex, endIndex = it.startIndex + 1))
-                finalList.add(TextWord(word = it.word.removeRange(0..0), startIndex = it.startIndex + 1, endIndex = it.endIndex))
-                return@forEach
+        return buildList {
+            wordList.forEach { word ->
+                var current = word
+                if (current.word.length > 1 && current.word.startsWith('(') && !current.word.contains(')')) {
+                    add(TextWord(word = "(", startIndex = current.startIndex, endIndex = current.startIndex + 1))
+                    current = current.copy(word = current.word.substring(1), startIndex = current.startIndex + 1)
+                }
+                if (current.word.length > 1 && current.word.endsWith(')') && !current.word.contains('(')) {
+                    add(current.copy(word = current.word.substring(0, current.word.length - 1), endIndex = current.endIndex - 1))
+                    add(TextWord(word = ")", startIndex = current.endIndex - 1, endIndex = current.endIndex))
+                } else {
+                    add(current)
+                }
             }
-            if (it.word.last() == ')' && !it.word.contains("(")) {
-                finalList.add(TextWord(word = it.word.substring(0..<it.word.lastIndex), startIndex = it.startIndex, endIndex = it.endIndex - 1))
-                finalList.add(TextWord(word = ")", startIndex = it.endIndex - 1, endIndex = it.endIndex))
-                return@forEach
-            }
-            finalList.add(it)
-        }
-        return finalList.filter { it.word.isNotBlank() }
+        }.filter { it.word.isNotBlank() }
     }
 
-
-    /**
-     * Simplifies a [TextWord] if it's a confirmed chord and matches a simplification rule.
-     *
-     * For example, "Cmaj7" would be simplified to "C".
-     *
-     * The simplification rules are defined in `simplificationMap`.
-     * If the chord doesn't match any rule or isn't a confirmed chord, it's returned unchanged.
-     *
-     * @return The simplified [TextWord], or the original if no simplification occurred.
-     */
-    private fun TextWord.simplify(): TextWord {
-        if (!this.isConfirmedChord) {
-            return this
-        }
-        val (simplifiedWord, lengthDiff) = simplifyChordString(this.word)
-        return this.copy(
-            word = simplifiedWord,
-            endIndex = this.endIndex - lengthDiff
-        )
-    }
 
     /**
      * Simplifies a given [Chord] by removing complex notations.
@@ -279,7 +262,6 @@ public object Khord {
         "dim"    to "m",
         "º"      to "m",
         "5"      to "",
-        "m7b5"   to "m7",
     )
 
     private fun String.fixWeirdLineBreaks() = replace("\"", "")
