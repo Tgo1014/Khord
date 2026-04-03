@@ -5,7 +5,7 @@ internal data class TextWord(
     val startIndex: Int = 0,
     val endIndex: Int = 0,
     val couldBeChord: Boolean = false,
-    var isConfirmedChord: Boolean = false,
+    val isConfirmedChord: Boolean = false,
 ) {
     fun toChord() = Chord(word, startIndex, endIndex)
 }

@@ -70,17 +70,11 @@ public object Khord {
     public fun simplifyChordsInText(text: String): String {
         val fixedText = text.fixWeirdLineBreaks()
         val originalChordList = find(fixedText)
-        var simplifiedText = fixedText
-        originalChordList.forEach {
-            val simpleChord = it.simplify()
-            val sizeDiffInSpaces = " ".repeat((it.chord.length - simpleChord.chord.length).coerceAtLeast(0))
-            simplifiedText = simplifiedText.replaceRange(
-                startIndex = it.startIndex,
-                endIndex = it.endIndex,
-                replacement = simpleChord.chord + sizeDiffInSpaces
-            )
+        return originalChordList.fold(fixedText) { acc, chord ->
+            val simpleChord = chord.simplify()
+            val sizeDiffInSpaces = " ".repeat((chord.chord.length - simpleChord.chord.length).coerceAtLeast(0))
+            acc.replaceRange(chord.startIndex, chord.endIndex, simpleChord.chord + sizeDiffInSpaces)
         }
-        return simplifiedText
     }
 
     /**
@@ -94,19 +88,12 @@ public object Khord {
         }
         val fixedText = text.fixWeirdLineBreaks()
         val chordList = find(fixedText)
-        var transposedText = fixedText
-        var transposedChordsSizeDiffOffset = 0
-        chordList.forEach { chord ->
+        return chordList.fold(fixedText to 0) { (acc, offset), chord ->
             val chordSize = chord.endIndex - chord.startIndex
             val transposedChord = transposeChord(chord, originalTone, newTone)
-            transposedText = transposedText.replaceRange(
-                startIndex = chord.startIndex + transposedChordsSizeDiffOffset,
-                endIndex = chord.endIndex + transposedChordsSizeDiffOffset,
-                replacement = transposedChord
-            )
-            transposedChordsSizeDiffOffset += (transposedChord.length - chordSize)
-        }
-        return transposedText
+            val newText = acc.replaceRange(chord.startIndex + offset, chord.endIndex + offset, transposedChord)
+            newText to (offset + transposedChord.length - chordSize)
+        }.first
     }
 
     /**
@@ -134,7 +121,6 @@ public object Khord {
         } catch (_: Exception) {
             // In case there's a weird symbol that gets recognized as chord and fails to transpose,
             // just return it back instead of crashing
-            println("Khord: Failed to transpose chord: $chord")
             chord.chord
         }
     }
@@ -216,25 +202,25 @@ public object Khord {
      * @return A [Pair] containing the simplified chord string and the difference in length.
      */
     private fun simplifyChordString(chordString: String): Pair<String, Int> {
-        for ((complex, simple) in simplificationMap) {
-            if (chordString.contains(complex)) {
-                val simplified = chordString.replace(complex, simple)
-                return simplified to (chordString.length - simplified.length)
-            }
-        }
-        return chordString to 0
+        val (complex, simple) = simplificationMap.entries
+            .firstOrNull { chordString.contains(it.key) }
+            ?: return chordString to 0
+        val simplified = chordString.replace(complex, simple)
+        return simplified to (chordString.length - simplified.length)
     }
 
     private val simplificationMap = mapOf(
         "7(9-)"  to "7",
         "m7(5-)" to "m7",
-        "maj9"   to "maj7",
-        "Δ9"     to "maj7",
-        "7M(9)"  to "7M",
+        "maj9"   to "",      // chain fix: was "maj7", Cmaj9 now simplifies directly to C
+        "Δ9"     to "",      // chain fix: was "maj7", CΔ9 now simplifies directly to C
+        "7M(9)"  to "",      // chain fix: was "7M",   C7M(9) now simplifies directly to C
         "maj7"   to "",
         "Δ7"     to "",
         "7M"     to "",
         "add9"   to "",
+        "add2"   to "",
+        "add4"   to "",
         "13"     to "7",
         "11"     to "7",
         "9"      to "7",
@@ -242,11 +228,13 @@ public object Khord {
         "7#9"    to "7",
         "7b5"    to "7",
         "7#5"    to "7",
+        "alt"    to "",
         "m7b5"   to "m7",
         "m7(5b)" to "m7",
         "ø7"     to "m7",
         "dim7"   to "m7",
         "º7"     to "m7",
+        "°7"     to "m7",
         "m9"     to "m7",
         "m11"    to "m7",
         "m13"    to "m7",
@@ -255,12 +243,14 @@ public object Khord {
         "m7M"    to "m",
         "sus2"   to "",
         "sus4"   to "",
+        "sus"    to "",
         "6"      to "",
         "m6"     to "m",
         "aug"    to "",
         "+"      to "",
         "dim"    to "m",
         "º"      to "m",
+        "°"      to "m",
         "5"      to "",
     )
 

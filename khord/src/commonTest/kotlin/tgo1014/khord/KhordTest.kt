@@ -289,4 +289,147 @@ class KhordTest {
         assertEquals("C", result[0].chord)
         assertEquals("F", result[1].chord)
     }
+
+    @Test
+    fun `GIVEN newTone is null WHEN transposing text THEN return original text`() {
+        val result = Khord.transposeText("C F G", ChordRoot.C, null)
+        assertEquals("C F G", result)
+    }
+
+    @Test
+    fun `GIVEN empty text WHEN searching for chords THEN return empty list`() {
+        assertTrue(Khord.find("").isEmpty())
+    }
+
+    @Test
+    fun `GIVEN text with no chords WHEN simplifying THEN return same text`() {
+        val text = "Hello world, these are just lyrics"
+        assertEquals(text, Khord.simplifyChordsInText(text))
+    }
+
+    @Test
+    fun `GIVEN text with already simple chords WHEN simplifying THEN return same text`() {
+        val text = "C  G  Am  F"
+        assertEquals(text, Khord.simplifyChordsInText(text))
+    }
+
+    @Test
+    fun `GIVEN multiline chord text WHEN finding chords THEN return correct chord values`() {
+        val result = Khord.find(testText)
+        assertEquals("C", result[0].chord)
+        assertEquals("F", result[1].chord)
+        assertEquals("D#m7-/G", result[2].chord)
+        assertEquals("F", result[3].chord)
+        assertEquals("Dm", result[4].chord)
+        assertEquals("F", result[5].chord)
+    }
+
+    @Test
+    fun `GIVEN multiline chord text WHEN finding chords THEN return correct chord indices`() {
+        val result = Khord.find(testText)
+        assertEquals(8, result[0].startIndex); assertEquals(9, result[0].endIndex)
+        assertEquals(21, result[1].startIndex); assertEquals(22, result[1].endIndex)
+        assertEquals(50, result[2].startIndex); assertEquals(57, result[2].endIndex)
+        assertEquals(67, result[3].startIndex); assertEquals(68, result[3].endIndex)
+        assertEquals(97, result[4].startIndex); assertEquals(99, result[4].endIndex)
+        assertEquals(114, result[5].startIndex); assertEquals(115, result[5].endIndex)
+    }
+
+    @Test
+    fun `GIVEN transposition changes chord length WHEN transposing text THEN subsequent chords are positioned correctly`() {
+        // "Bb" (2 chars) -> "C" (1 char) shortens text by 1; "C" at index 3 must shift to 2
+        val result = Khord.transposeText("Bb C", ChordRoot.Bb, ChordRoot.C)
+        assertEquals("C D", result)
+    }
+
+    @Test
+    fun `GIVEN chord with degree symbol WHEN searching THEN identify as valid`() {
+        val resultOrdinal = Khord.find("Cº")
+        assertEquals(1, resultOrdinal.size)
+        assertEquals("Cº", resultOrdinal.first().chord)
+
+        val resultDegree = Khord.find("C°")
+        assertEquals(1, resultDegree.size)
+        assertEquals("C°", resultDegree.first().chord)
+    }
+
+    @Test
+    fun `GIVEN a line where exactly half of words are chords WHEN searching THEN ignore the line`() {
+        // 2 words, 1 chord (50% is NOT > 50%) -> no chord line
+        val result = Khord.find("C text")
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `GIVEN transposeChord with same original and new tone WHEN transposing THEN return original chord`() {
+        val chord = Chord("Cmaj7", 0, 5)
+        val result = Khord.transposeChord(chord, ChordRoot.C, ChordRoot.C)
+        assertEquals("Cmaj7", result)
+    }
+
+    @Test
+    fun `GIVEN chord with add9 extension WHEN searching THEN identify as valid`() {
+        val result = Khord.find("Cadd9")
+        assertEquals(1, result.size)
+        assertEquals("Cadd9", result.first().chord)
+    }
+
+    @Test
+    fun `GIVEN text with literal double quotes WHEN finding chords THEN quotes are stripped`() {
+        val result = Khord.find("\"C F\"")
+        assertEquals(2, result.size)
+        assertEquals("C", result[0].chord)
+        assertEquals("F", result[1].chord)
+    }
+
+    // Simplification: chain fixes (maj9/Δ9/7M(9) used to stop at an intermediate form)
+
+    @Test
+    fun `GIVEN maj9 chord WHEN simplifying THEN simplifies directly to root`() {
+        // "Cmaj9" (5 chars) → "C    " (C + 4 spaces), not the intermediate "Cmaj7"
+        assertEquals("C    ", Khord.simplifyChordsInText("Cmaj9"))
+    }
+
+    @Test
+    fun `GIVEN delta9 chord WHEN simplifying THEN simplifies directly to root`() {
+        // "CΔ9" (3 chars) → "C  " (C + 2 spaces), not the intermediate "Cmaj7"
+        assertEquals("C  ", Khord.simplifyChordsInText("CΔ9"))
+    }
+
+    @Test
+    fun `GIVEN 7M(9) chord WHEN simplifying THEN simplifies directly to root`() {
+        // "C7M(9)" (6 chars) → "C     " (C + 5 spaces), not the intermediate "C7M"
+        assertEquals("C     ", Khord.simplifyChordsInText("C7M(9)"))
+    }
+
+    // Simplification: degree sign ° (U+00B0) — distinct from ordinal indicator º (U+00BA)
+
+    @Test
+    fun `GIVEN diminished chord with degree sign WHEN simplifying THEN simplifies to minor`() {
+        // "C°" (2 chars) → "Cm" (2 chars), same length so no padding
+        assertEquals("Cm", Khord.simplifyChordsInText("C°"))
+        // "C°7" (3 chars) → "Cm7" (3 chars), same length so no padding
+        assertEquals("Cm7", Khord.simplifyChordsInText("C°7"))
+    }
+
+    // Simplification: new entries
+
+    @Test
+    fun `GIVEN sus chord without number WHEN simplifying THEN simplifies to root`() {
+        // "Gsus" (4 chars) → "G   " (G + 3 spaces), keeping alignment with next chord
+        assertEquals("G    G", Khord.simplifyChordsInText("Gsus G"))
+    }
+
+    @Test
+    fun `GIVEN add2 or add4 chord WHEN simplifying THEN simplifies to root`() {
+        // "Cadd2" (5 chars) → "C    " (C + 4 spaces)
+        assertEquals("C    ", Khord.simplifyChordsInText("Cadd2"))
+        assertEquals("C    ", Khord.simplifyChordsInText("Cadd4"))
+    }
+
+    @Test
+    fun `GIVEN altered chord WHEN simplifying THEN alt suffix is removed`() {
+        // "G7alt" (5 chars) → "G7   " (G7 + 3 spaces), keeping alignment with next chord
+        assertEquals("G7    G", Khord.simplifyChordsInText("G7alt G"))
+    }
 }
