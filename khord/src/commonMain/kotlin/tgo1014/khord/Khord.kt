@@ -198,14 +198,16 @@ public object Khord {
 
     /**
      * Simplifies a chord string based on the rules in `simplificationMap`.
+     * Chord inversions (slash notation) are stripped — e.g., C/E → C, Bm/A → Bm.
      *
      * @return A [Pair] containing the simplified chord string and the difference in length.
      */
     private fun simplifyChordString(chordString: String): Pair<String, Int> {
+        val withoutInversion = chordString.substringBefore("/")
         val (complex, simple) = simplificationMap.entries
-            .firstOrNull { chordString.contains(it.key) }
-            ?: return chordString to 0
-        val simplified = chordString.replace(complex, simple)
+            .firstOrNull { withoutInversion.contains(it.key) }
+            ?: return withoutInversion to (chordString.length - withoutInversion.length)
+        val simplified = withoutInversion.replace(complex, simple)
         return simplified to (chordString.length - simplified.length)
     }
 

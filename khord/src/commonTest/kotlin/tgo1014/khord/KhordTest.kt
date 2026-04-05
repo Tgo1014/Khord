@@ -224,9 +224,9 @@ class KhordTest {
     fun `GIVEN chords text WHEN simplifying THEN simple versions returned`() {
         val result = Khord.simplifyChordsInText(simplifyTestText)
         assertEquals(
-            "Bm        Bm/A          Abm7          G\n" +
+            "Bm        Bm            Abm7          G\n" +
                     "Há quanto tempo te esperava, Amado meu\n" +
-                    "Bm         Bm/A      Abm7          G\n" +
+                    "Bm         Bm        Abm7          G\n" +
                     "Há tantas noites vigiava, Esposo meu",
             result,
         )
@@ -236,7 +236,7 @@ class KhordTest {
     fun `GIVEN simplifying WHEN searching chords THEN return correct chords`() {
         val result = Khord.simplifyChordsInText(testText).run { Khord.find(this) }
         assertEquals(
-            "(8, 9), (21, 22), (50, 57), (67, 68), (97, 99), (114, 115)",
+            "(8, 9), (21, 22), (50, 55), (67, 68), (97, 99), (114, 115)",
             result.map { it.startIndex to it.endIndex }.joinToString()
         )
         assertEquals(6, result.size)
@@ -431,5 +431,34 @@ class KhordTest {
     fun `GIVEN altered chord WHEN simplifying THEN alt suffix is removed`() {
         // "G7alt" (5 chars) → "G7   " (G7 + 3 spaces), keeping alignment with next chord
         assertEquals("G7    G", Khord.simplifyChordsInText("G7alt G"))
+    }
+
+    // Simplification: chord inversions (slash chords)
+
+    @Test
+    fun `GIVEN slash chord WHEN simplifying THEN inversion is stripped`() {
+        // "C/E" (3 chars) → "C  " (C + 2 spaces)
+        assertEquals("C  ", Khord.simplifyChordsInText("C/E"))
+        // "Bm/A" (4 chars) → "Bm  " (Bm + 2 spaces)
+        assertEquals("Bm  ", Khord.simplifyChordsInText("Bm/A"))
+        // "D/F#" (4 chars) → "D   " (D + 3 spaces)
+        assertEquals("D   ", Khord.simplifyChordsInText("D/F#"))
+        // "G/B" (3 chars) → "G  " (G + 2 spaces)
+        assertEquals("G  ", Khord.simplifyChordsInText("G/B"))
+    }
+
+    @Test
+    fun `GIVEN complex slash chord WHEN simplifying THEN both inversion and complexity are removed`() {
+        // "Cmaj7/E" (7 chars) → "C      " (C + 6 spaces): inversion stripped + maj7 removed
+        assertEquals("C      ", Khord.simplifyChordsInText("Cmaj7/E"))
+        // "Am7/G" (5 chars) → "Am7  " (Am7 + 2 spaces): inversion stripped, 7 is not complex
+        assertEquals("Am7  ", Khord.simplifyChordsInText("Am7/G"))
+    }
+
+    @Test
+    fun `GIVEN slash chord WHEN finding with simplify THEN inversion is stripped`() {
+        val result = Khord.find("C/E  G/B", simplify = true)
+        assertEquals("C", result[0].chord)
+        assertEquals("G", result[1].chord)
     }
 }
