@@ -461,4 +461,21 @@ class KhordTest {
         assertEquals("C", result[0].chord)
         assertEquals("G", result[1].chord)
     }
+
+    @Test
+    fun `GIVEN chord with parenthesized tension WHEN simplifying THEN tension group is stripped`() {
+        // F#m7(11): (11) should be dropped, leaving F#m7
+        val result = Khord.find("F#m7(11)", simplify = true)
+        assertEquals("F#m7", result.first().chord)
+
+        // B7(4/9): slash inside parens is not an inversion, (4/9) should be dropped, leaving B7
+        val result2 = Khord.find("B7(4/9)", simplify = true)
+        assertEquals("B7", result2.first().chord)
+    }
+
+    @Test
+    fun `GIVEN chord with parenthesized tension WHEN not simplifying THEN chord is returned as-is`() {
+        assertEquals("F#m7(11)", Khord.find("F#m7(11)").first().chord)
+        assertEquals("B7(4/9)", Khord.find("B7(4/9)").first().chord)
+    }
 }

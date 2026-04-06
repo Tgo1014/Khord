@@ -199,16 +199,34 @@ public object Khord {
     /**
      * Simplifies a chord string based on the rules in `simplificationMap`.
      * Chord inversions (slash notation) are stripped — e.g., C/E → C, Bm/A → Bm.
+     * Parenthesized tension groups like (11) or (4/9) are also stripped before map lookup.
      *
      * @return A [Pair] containing the simplified chord string and the difference in length.
      */
     private fun simplifyChordString(chordString: String): Pair<String, Int> {
-        val withoutInversion = chordString.substringBefore("/")
+        val withoutInversion = stripInversion(chordString)
+        val withoutTensions = withoutInversion.replace(Regex("""\([0-9b#/]+\)"""), "")
         val (complex, simple) = simplificationMap.entries
-            .firstOrNull { withoutInversion.contains(it.key) }
-            ?: return withoutInversion to (chordString.length - withoutInversion.length)
-        val simplified = withoutInversion.replace(complex, simple)
+            .firstOrNull { withoutTensions.contains(it.key) }
+            ?: return withoutTensions to (chordString.length - withoutTensions.length)
+        val simplified = withoutTensions.replace(complex, simple)
         return simplified to (chordString.length - simplified.length)
+    }
+
+    /**
+     * Strips the inversion (bass note) from a slash chord, ignoring slashes inside parentheses.
+     * e.g., "C/E" → "C", "B7(4/9)" → "B7(4/9)" (slash is inside parens, not an inversion).
+     */
+    private fun stripInversion(chordString: String): String {
+        var depth = 0
+        for (i in chordString.indices) {
+            when (chordString[i]) {
+                '(' -> depth++
+                ')' -> depth--
+                '/' -> if (depth == 0) return chordString.substring(0, i)
+            }
+        }
+        return chordString
     }
 
     private val simplificationMap = mapOf(
