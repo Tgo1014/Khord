@@ -91,8 +91,27 @@ public object Khord {
         return chordList.fold(fixedText to 0) { (acc, offset), chord ->
             val chordSize = chord.endIndex - chord.startIndex
             val transposedChord = transposeChord(chord, originalTone, newTone)
-            val newText = acc.replaceRange(chord.startIndex + offset, chord.endIndex + offset, transposedChord)
-            newText to (offset + transposedChord.length - chordSize)
+            val diff = transposedChord.length - chordSize
+            val startIdx = chord.startIndex + offset
+            val endIdx = chord.endIndex + offset
+            when {
+                diff < 0 -> {
+                    // Chord got shorter: pad with spaces to preserve alignment
+                    val newText = acc.replaceRange(startIdx, endIdx, transposedChord + " ".repeat(-diff))
+                    newText to offset
+                }
+                diff > 0 -> {
+                    // Chord got longer: eat spaces after it to preserve alignment
+                    val spacesAfter = acc.substring(endIdx).takeWhile { it == ' ' }.length
+                    val spacesToEat = minOf(diff, spacesAfter)
+                    val newText = acc.replaceRange(startIdx, endIdx + spacesToEat, transposedChord)
+                    newText to (offset + diff - spacesToEat)
+                }
+                else -> {
+                    val newText = acc.replaceRange(startIdx, endIdx, transposedChord)
+                    newText to offset
+                }
+            }
         }.first
     }
 

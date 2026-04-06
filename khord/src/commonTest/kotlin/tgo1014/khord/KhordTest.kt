@@ -87,7 +87,7 @@ class KhordTest {
             ChordRoot.D
         )
         assertEquals(
-            "       F#m           D           Bm7        G#º\nVim buscar e vim salvar o que estava já perdido",
+            "       F#m          D           Bm7        G#º\nVim buscar e vim salvar o que estava já perdido",
             result
         )
     }
@@ -336,10 +336,9 @@ class KhordTest {
     }
 
     @Test
-    fun `GIVEN transposition changes chord length WHEN transposing text THEN subsequent chords are positioned correctly`() {
-        // "Bb" (2 chars) -> "C" (1 char) shortens text by 1; "C" at index 3 must shift to 2
+    fun `GIVEN transposition changes chord length WHEN transposing text THEN alignment is preserved`() {
         val result = Khord.transposeText("Bb C", ChordRoot.Bb, ChordRoot.C)
-        assertEquals("C D", result)
+        assertEquals("C  D", result)
     }
 
     @Test
@@ -460,6 +459,37 @@ class KhordTest {
         val result = Khord.find("C/E  G/B", simplify = true)
         assertEquals("C", result[0].chord)
         assertEquals("G", result[1].chord)
+    }
+
+    @Test
+    fun `GIVEN E major chord sheet WHEN transposing to G THEN chord columns are preserved`() {
+        val text = "E9                B/D#\n" +
+                    "   Eu tão simples,     tão pequeno\n" +
+                    "C#m                   G#m7(13-)\n" +
+                    "    Um carpinteiro e nada mais\n" +
+                    "         A9                E/G#\n" +
+                    "Mas meu Deus olhou pra mim"
+        val result = Khord.transposeText(text, ChordRoot.E, ChordRoot.G)
+        assertEquals("G9                D/F#\n" +
+                    "   Eu tão simples,     tão pequeno\n" +
+                    "Em                    Bm7(13-) \n" +
+                    "    Um carpinteiro e nada mais\n" +
+                    "         C9                G/B \n" +
+                    "Mas meu Deus olhou pra mim",
+            result
+        )
+    }
+
+    @Test
+    fun `GIVEN chord grows with enough space after it WHEN transposing THEN space is absorbed and next chord stays in column`() {
+        val result = Khord.transposeText("A9   G", ChordRoot.A, ChordRoot.Bb)
+        assertEquals("Bb9  G#", result)
+    }
+
+    @Test
+    fun `GIVEN chord grows with only one space after it WHEN transposing THEN space is eaten and chords become adjacent`() {
+        val result = Khord.transposeText("A9 G", ChordRoot.A, ChordRoot.Bb)
+        assertEquals("Bb9G#", result)
     }
 
     @Test
